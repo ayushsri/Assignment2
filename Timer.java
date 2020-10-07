@@ -6,6 +6,9 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public class Timer {
+    private long ticks = 0L;
+    private int laps = 0;
+    private boolean running = false;
 
     /**
      * Construct a new Timer and set it running.
@@ -21,6 +24,7 @@ public class Timer {
      * @return the average milliseconds per repetition.
      */
     public <T> double repeat(int n, Supplier<T> function) {
+        ticks= getClock()*(-1);
         for (int i = 0; i < n; i++) {
             function.get();
             lap();
@@ -54,10 +58,26 @@ public class Timer {
     public <T, U> double repeat(int n, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction, Consumer<U> postFunction) {
         logger.trace("repeat: with " + n + " runs");
         // TO BE IMPLEMENTED: note that the timer is running when this method is called and should still be running when it returns.
-        for(int i=0;i<n;i++)
-        {
-            return repeat(n, supplier, function, null, null);
+
+        T i1 = supplier.get();
+        T i2;
+        U op = null;
+        i2=i1;
+        pause();
+
+        for (int i=0;i<n;i++) {
+            if(preFunction!=null)
+                i2= preFunction.apply(i1);
+            resume();
+            op = function.apply(i2);
+            lap();
+            pause();
+            if (postFunction!=null) postFunction.accept(op);
         }
+
+        double result = meanLapTime();
+        resume();
+        return result;
 
     }
 
@@ -148,9 +168,7 @@ public class Timer {
                 '}';
     }
 
-    private long ticks = 0L;
-    private int laps = 0;
-    private boolean running = false;
+
 
     // NOTE: Used by unit tests
     private long getTicks() {
@@ -177,8 +195,8 @@ public class Timer {
      */
     private static long getClock() {
         // TO BE IMPLEMENTED
-        ticks= System.nanoTime();
-        return ticks;
+        return System.nanoTime();
+
     }
 
     /**
@@ -190,7 +208,7 @@ public class Timer {
      */
     private static double toMillisecs(long ticks) {
         // TO BE IMPLEMENTED
-        return ticks/Math.pow(10,6);
+        return (double)ticks/Math.pow(10,6);
     }
 
     final static LazyLogger logger = new LazyLogger(Timer.class);

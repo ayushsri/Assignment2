@@ -4,6 +4,12 @@
 
 package edu.neu.coe.info6205.util;
 
+import edu.neu.coe.info6205.sort.InsertionSort;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -115,6 +121,7 @@ public class Benchmark_Timer<T> implements Benchmark<T> {
      * @param f           a Consumer function (i.e. a function of T => Void).
      *                    Function f is the function whose timing you want to measure. For example, you might create a function which sorts an array.
      */
+
     public Benchmark_Timer(String description, Consumer<T> f) {
         this(description, null, f, null);
     }
@@ -125,4 +132,55 @@ public class Benchmark_Timer<T> implements Benchmark<T> {
     private final Consumer<T> fPost;
 
     final static LazyLogger logger = new LazyLogger(Benchmark_Timer.class);
-}
+
+    public static void main(String args[])
+    {
+
+        UnaryOperator<Integer[]> pre = initial -> {return initial.clone();};
+        Consumer<Integer[]> func = initial -> new InsertionSort<Integer>().sort(initial,0,initial.length);
+        Consumer<Integer[]> post=null;
+        Benchmark_Timer<Integer[]> bt = new Benchmark_Timer<Integer[]>("Insertion Sort",pre,func,post);
+
+
+
+            int size1 = 200;  //Inital size
+            int DL = 5; //DOUBLING_LIMIT
+            int R = 10;  //RUNS
+
+            for(int s=size1;s<=size1*Math.pow(2, DL);s=s*2) {
+
+                ArrayList<Integer[]> ary = new ArrayList<Integer[]>();
+                Integer[] random = new Integer[s];
+                for(int i=0;i<s;i++) {
+                    random[i] = new Random().nextInt(s);
+                }
+                Integer[] sorted = random.clone();
+
+                new InsertionSort<Integer>().sort(sorted,0,sorted.length);
+
+                Integer[] reverse  = sorted.clone();
+                Collections.reverse(Arrays.asList(reverse));
+
+                //Partially sorted array (60% sorted).
+                Integer[] partially= random.clone();
+                 new InsertionSort<Integer>().sort(partially,0,(int) (partially.length*0.8));
+
+                ary.add(random);
+                ary.add(sorted);
+                ary.add(reverse);
+                ary.add(partially);
+                System.out.println("value for n= "+s);
+                System.out.println(bt.run(ary.get(0), R));
+                System.out.println(bt.run(ary.get(1), R));
+                System.out.println(bt.run(ary.get(2), R));
+                System.out.println(bt.run(ary.get(3), R));
+
+            }
+        }
+        }
+
+
+
+
+
+
